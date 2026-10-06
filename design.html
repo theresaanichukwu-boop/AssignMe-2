@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AssignMe — Design System Preview (Phase 2)</title>
+<style>
+  :root{
+    --navy-50:#F0F4FA; --navy-100:#DCE5F2; --navy-800:#1B3D68; --navy-900:#132E52; --navy-950:#0B1F3A;
+    --teal-50:#F0FDFA; --teal-100:#CCFBF1; --teal-600:#0D9488; --teal-700:#0F766E; --teal-800:#115E59;
+    --coral-50:#FFF5F3; --coral-100:#FFE4DE; --coral-500:#F97360; --coral-600:#E85A46; --coral-700:#C94A38;
+    --radius-sm:6px; --radius-md:8px; --radius-lg:12px; --radius-xl:16px; --radius-pill:9999px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--navy-950);background:#fff;line-height:1.5}
+  .skip{position:absolute;left:-9999px}
+  .skip:focus{left:16px;top:16px;z-index:99;background:var(--navy-950);color:#fff;padding:8px 16px;border-radius:8px}
+  :focus-visible{outline:2px solid var(--teal-700);outline-offset:2px}
+  header.top{background:var(--navy-950);color:#fff;padding:32px}
+  header.top p{color:var(--teal-100);margin:0}
+  main{max-width:1100px;margin:0 auto;padding:32px 24px 80px}
+  section{margin-top:48px}
+  h2{font-size:28px;margin:0 0 8px}
+  .muted{color:#475569}
+  .grid{display:grid;gap:16px}
+  @media(min-width:768px){.grid.two{grid-template-columns:1fr 1fr}.grid.three{grid-template-columns:1fr 1fr 1fr}}
+  .card{border:1px solid var(--navy-100);border-radius:12px;padding:24px;background:#fff}
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+  .swatch{border:1px solid var(--navy-100);border-radius:8px;overflow:hidden}
+  .swatch div{height:56px}
+  .swatch span{display:block;padding:8px;font-size:12px;font-family:monospace}
+  .btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid transparent;cursor:pointer}
+  .btn.primary{background:var(--navy-950);color:#fff}.btn.primary:hover{background:var(--navy-900)}
+  .btn.accent{background:var(--teal-700);color:#fff}.btn.accent:hover{background:var(--teal-600)}
+  .btn.secondary{background:#fff;border-color:var(--navy-100);color:var(--navy-950)}
+  .btn.danger{background:var(--coral-600);color:#fff}
+  .btn.ghost{background:transparent}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.sm{height:32px;font-size:13px}.btn.lg{height:48px;font-size:16px}
+  .spinner{width:16px;height:16px;border:2px solid currentColor;border-top-color:transparent;border-radius:9999px;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  label.lbl{display:block;font-size:14px;font-weight:500;margin:16px 0 4px}
+  input[type=text],input[type=search],select,textarea{width:100%;border:1px solid var(--navy-100);border-radius:8px;padding:0 12px;font-size:14px}
+  input[type=text],input[type=search],select{height:40px}
+  textarea{padding:8px 12px;min-height:96px}
+  input:hover,select:hover,textarea:hover{border-color:var(--teal-700)}
+  input:disabled,select:disabled,textarea:disabled{background:var(--navy-50);color:#94a3b8}
+  .err{border-color:#dc2626!important}
+  .emsg{color:#b91c1c;font-size:12px;margin-top:4px}
+  .badge{display:inline-flex;padding:2px 10px;border-radius:9999px;font-size:12px;font-weight:500;background:var(--navy-50)}
+  .badge.ok{background:var(--teal-50);color:var(--teal-800)}.badge.warn{background:#fef3c7;color:#92400e}
+  .badge.bad{background:#fee2e2;color:#b91c1c}.badge.acc{background:var(--coral-50);color:var(--coral-700)}
+  .alert{border:1px solid var(--navy-100);border-radius:8px;padding:12px 16px;font-size:14px;margin-top:8px}
+  .alert.ok{background:var(--teal-50)}.alert.warn{background:#fffbeb}.alert.bad{background:#fef2f2}
+  .bar{height:8px;background:var(--navy-100);border-radius:9999px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--teal-700)}
+  .skel{background:var(--navy-100);border-radius:8px;animation:pulse 1.5s infinite}
+  @keyframes pulse{50%{opacity:.5}}
+  .mono{font-family:monospace}.serif{font-family:Georgia,serif}
+  .issue{border:1px solid var(--navy-100);border-radius:8px;padding:12px 16px;margin-top:8px}
+  @media (prefers-reduced-motion: reduce){.spinner,.skel{animation-duration:.01ms!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="top">
+  <p>AssignMe · Phase 2 · PRD §§18–21</p>
+  <h1 style="font-family:Georgia,serif;margin:8px 0 0">Design system preview — standalone</h1>
+  <p style="color:#CBD5E1;max-width:60ch">This file works without the app server. Tokens: Navy #0B1F3A · Teal #0F766E · Coral #F97360. Fonts: Inter / Source Serif 4 / JetBrains Mono. Type 12–48px. Spacing 4px base. Radii 6/8/12/16 + pill. Breakpoints 640/768/1024/1280/1536.</p>
+</header>
+<main id="main">
+  <section aria-labelledby="colors"><h2 id="colors">1 · Colors</h2>
+    <div class="swatches">
+      <div class="swatch"><div style="background:#0B1F3A"></div><span>Navy 950 #0B1F3A</span></div>
+      <div class="swatch"><div style="background:#0F766E"></div><span>Teal 700 #0F766E</span></div>
+      <div class="swatch"><div style="background:#F97360"></div><span>Coral 500 #F97360</span></div>
+      <div class="swatch"><div style="background:#DCE5F2"></div><span>Navy 100</span></div>
+      <div class="swatch"><div style="background:#CCFBF1"></div><span>Teal 100</span></div>
+      <div class="swatch"><div style="background:#FFE4DE"></div><span>Coral 100</span></div>
+    </div>
+  </section>
+  <section aria-labelledby="type"><h2 id="type">2 · Typography</h2>
+    <p class="muted">UI: Inter · Academic: Source Serif 4 · Code: JetBrains Mono · Weights 400/500/600/700</p>
+    <p style="font-size:48px;margin:8px 0" class="serif">Academic serif 48</p>
+    <p style="font-size:32px;margin:8px 0" class="serif">Section heading 32</p>
+    <p style="font-size:20px">Body large 20 · Body 16 · Small 14 · Caption 12</p>
+    <p class="mono">Mono 14 — DOI: 10.0000/example · citation chip</p>
+  </section>
+  <section aria-labelledby="buttons"><h2 id="buttons">3 · Buttons (default / hover / focus / disabled / loading)</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn primary">Primary</button>
+      <button class="btn accent">Accent</button>
+      <button class="btn secondary">Secondary</button>
+      <button class="btn ghost">Ghost</button>
+      <button class="btn danger">Danger</button>
+      <button class="btn primary" disabled>Disabled</button>
+      <button class="btn primary" aria-busy="true"><span class="spinner" aria-hidden="true"></span>Loading</button>
+      <button class="btn primary sm">Small</button>
+      <button class="btn primary lg">Large</button>
+    </div>
+  </section>
+  <section aria-labelledby="forms"><h2 id="forms">4 · Inputs (default / focus / disabled / error)</h2>
+    <div class="grid two">
+      <div><label class="lbl" for="d1">Default input</label><input id="d1" type="text" placeholder="e.g. Research topic" /></div>
+      <div><label class="lbl" for="d2">Disabled input</label><input id="d2" type="text" value="Locked value" disabled /></div>
+      <div><label class="lbl" for="d3">Error input</label><input id="d3" class="err" type="text" value="x" aria-invalid="true" aria-describedby="d3e" /><p class="emsg" id="d3e" role="alert">Topic is required.</p></div>
+      <div><label class="lbl" for="d4">Select</label><select id="d4"><option>APA 7</option><option>MLA 9</option><option>Chicago</option></select></div>
+    </div>
+    <label class="lbl" for="d5">Textarea</label><textarea id="d5">Draft paragraph…</textarea>
+    <label class="lbl" for="d6">Search</label><input id="d6" type="search" placeholder="Search Crossref / OpenAlex" />
+    <label class="lbl" for="d7">File upload (PDF/DOCX/TXT/MD, 10MB)</label><input id="d7" type="file" />
+  </section>
+  <section aria-labelledby="fb"><h2 id="fb">5 · Badges / Alerts / Progress / States</h2>
+    <p><span class="badge">APA 7</span> <span class="badge ok">VERIFIED</span> <span class="badge warn">NEEDS REVIEW</span> <span class="badge bad">CRITICAL</span> <span class="badge acc">2021–2026</span></p>
+    <div class="alert ok" role="alert">Success — 3 verified sources added to the evidence pool.</div>
+    <div class="alert warn" role="alert">Warning — 2 claims need evidence before export.</div>
+    <div class="alert bad" role="alert">Error — research provider unreachable; nothing fabricated.</div>
+    <p style="margin-top:16px">AI generations 7/20</p><div class="bar" role="progressbar" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100" aria-label="AI generations usage"><i style="width:35%"></i></div>
+    <div class="grid two" style="margin-top:16px">
+      <div class="card"><strong>Empty state</strong><p class="muted">No sources yet. Run research to populate the evidence pool.</p></div>
+      <div class="card"><strong>Error state</strong><p class="muted">Save failed — existing work preserved. Try again.</p></div>
+    </div>
+    <div class="skel" style="height:48px;margin-top:16px" role="status" aria-label="Loading"></div>
+  </section>
+  <section aria-labelledby="ac"><h2 id="ac">6 · Academic components</h2>
+    <div class="grid two">
+      <div class="card"><span class="badge ok">VERIFIED</span><h3 class="serif">Example source title</h3><p class="muted">A. Researcher, B. Scholar · 2024 · Journal of Examples</p><p class="mono">DOI: 10.0000/example</p></div>
+      <div class="card"><h3>Evidence</h3><p>Key finding with objective linkage and limitation noted.</p><p><span class="badge">High relevance</span> <span class="badge warn">Limit: small sample</span></p></div>
+      <div class="card"><h3>AI response · NEEDS REVIEW</h3><p class="serif">Draft paragraph with academic rationale and next step.</p><div class="alert warn">2 claims need support.</div></div>
+      <div class="card"><h3>Reviewer issues</h3><div class="issue"><span class="badge bad">CRITICAL</span> <strong>Evidence</strong><p>Conclusion exceeds cited findings.</p></div><div class="issue"><span class="badge">SUGGESTION</span> <strong>Clarity</strong><p>Tighten thesis statement.</p></div></div>
+    </div>
+    <p style="margin-top:16px">Citation chips: <span class="badge mono">(Author, 2024)</span> <span class="badge mono">[1]</span></p>
+  </section>
+  <section aria-labelledby="nav"><h2 id="nav">7 · Shell / nav / responsive</h2>
+    <p class="muted">App shell: navy sidebar (Dashboard · My Work · Create Workspace · Settings + Overview/Build/Research/Editor/Reviewer/Sources/Versions/Export), header, breadcrumbs, main landmark. Layouts stack below 768px; max content 1024–1280px. Dialogs trap focus, close on Escape, restore focus; tabs use arrow keys; toasts use aria-live.</p>
+  </section>
+</main>
+</body>
+</html>
