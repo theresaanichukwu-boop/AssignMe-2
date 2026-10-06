@@ -1,0 +1,587 @@
+// AssignMe Prisma 7 schema — Phase 1 (PRD §28)
+// Verify Better Auth tables against better-auth@1.7.7 before first migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Enums ----------
+
+enum Role {
+  STUDENT
+  ADMIN
+  CONTENT_MANAGER
+  SUPPORT
+}
+
+enum WorkTypeKey {
+  SEMINAR
+  RESEARCH_PROJECT
+  LITERATURE_REVIEW
+  CASE_STUDY
+  ESSAY
+  ASSIGNMENT
+}
+
+enum CitationStyle {
+  APA_7
+  MLA_9
+  CHICAGO
+  HARVARD
+  VANCOUVER
+  IEEE
+}
+
+enum AIMode {
+  BUILD_WITH_ME
+  AUTOMATIC
+}
+
+enum AIStatus {
+  DRAFT
+  VERIFIED
+  NEEDS_REVIEW
+  BLOCKED
+  ERROR
+}
+
+enum IssueSeverity {
+  CRITICAL
+  MAJOR
+  MODERATE
+  MINOR
+  SUGGESTION
+}
+
+enum SourceVerification {
+  UNVERIFIED
+  VERIFIED
+  FAILED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+  TRIALING
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  ABANDONED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ---------- Auth (Better Auth) ----------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          Role      @default(STUDENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions        Session[]
+  accounts        Account[]
+  profile         StudentProfile?
+  workspaces      Workspace[]
+  subscriptions   Subscription[]
+  trials          Trial[]
+  transactions    PaymentTransaction[]
+  usageEvents     UsageEvent[]
+  files           FileObject[]
+  tickets         SupportTicket[]
+  reports         UserReport[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+}
+
+// ---------- Academic profile ----------
+
+model Institution {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  country   String?
+  createdAt DateTime    @default(now())
+  programmes Programme[]
+}
+
+model Programme {
+  id            String       @id @default(cuid())
+  name          String
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  createdAt     DateTime     @default(now())
+
+  @@index([institutionId])
+}
+
+model Discipline {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  createdAt DateTime       @default(now())
+  pack      DisciplinePack?
+}
+
+model DisciplinePack {
+  id           String     @id @default(cuid())
+  disciplineId String     @unique
+  discipline   Discipline @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
+  terminology  Json       @default("{}")
+  conventions  Json       @default("{}")
+  structures   Json       @default("{}")
+  methodologies Json      @default("[]")
+  frameworks   Json       @default("[]")
+  evidencePrefs Json      @default("{}")
+  commonErrors Json       @default("[]")
+  reviewRules  Json       @default("[]")
+  writingNotes Json       @default("{}")
+  version      Int        @default(1)
+  updatedAt    DateTime   @updatedAt
+}
+
+model WorkTypeTemplate {
+  id        String      @id @default(cuid())
+  key       WorkTypeKey @unique
+  name      String
+  structure Json
+  guidance  Json        @default("{}")
+  version   Int         @default(1)
+  updatedAt DateTime    @updatedAt
+}
+
+model StudentProfile {
+  id             String         @id @default(cuid())
+  userId         String         @unique
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution    String?
+  faculty        String?
+  department     String?
+  programme      String?
+  academicLevel  String?
+  course         String?
+  discipline     String?
+  country        String?
+  citationStyle  CitationStyle  @default(APA_7)
+  supervisor     String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+// ---------- Workspace core ----------
+
+model Workspace {
+  id                     String                 @id @default(cuid())
+  userId                 String
+  user                   User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                  String
+  workType               WorkTypeKey
+  discipline             String?
+  academicLevel          String?
+  course                 String?
+  topic                  String
+  objectives             Json                   @default("[]")
+  researchQuestions      Json                   @default("[]")
+  hypotheses             Json                   @default("[]")
+  citationStyle          CitationStyle          @default(APA_7)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  requirements           WorkspaceRequirement[]
+  sections               Section[]
+  notes                  Note[]
+  workspaceSources       WorkspaceSource[]
+  evidence               EvidenceItem[]
+  citations              Citation[]
+  reviews                Review[]
+  aiRequests             AIRequest[]
+  versions               SectionVersion[]       @relation("WorkspaceVersions")
+  exportHistory          Json                   @default("[]")
+
+  @@index([userId, createdAt])
+}
+
+model WorkspaceRequirement {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  kind        String
+  fileId      String?
+  file        FileObject? @relation(fields: [fileId], references: [id])
+  textExcerpt String?
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId])
+}
+
+model Section {
+  id          String           @id @default(cuid())
+  workspaceId String
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  key         String
+  title       String
+  order       Int
+  content     String           @default("")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  versions    SectionVersion[]
+  reviews     Review[]
+
+  @@unique([workspaceId, key])
+  @@index([workspaceId, order])
+}
+
+model SectionVersion {
+  id          String    @id @default(cuid())
+  sectionId   String
+  section     Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation("WorkspaceVersions", fields: [workspaceId], references: [id], onDelete: Cascade)
+  version     Int
+  content     String
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([sectionId, version])
+  @@index([workspaceId, createdAt])
+}
+
+model Note {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title       String    @default("")
+  body        String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([workspaceId])
+}
+
+// ---------- Evidence ----------
+
+model Source {
+  id               String             @id @default(cuid())
+  title            String
+  authors          Json               @default("[]")
+  year             Int?
+  publication      String?
+  doi              String?            @unique
+  url              String?
+  normalizedUrl    String?            @unique
+  abstract         String?
+  sourceType       String?
+  verification     SourceVerification @default(UNVERIFIED)
+  retrievalDate    DateTime           @default(now())
+  provider         String?
+  createdAt        DateTime           @default(now())
+  workspaceSources WorkspaceSource[]
+  evidence         EvidenceItem[]
+
+  @@index([year])
+}
+
+model WorkspaceSource {
+  id          String             @id @default(cuid())
+  workspaceId String
+  workspace   Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceId    String
+  source      Source             @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  verification SourceVerification @default(UNVERIFIED)
+  savedAt     DateTime           @default(now())
+
+  @@unique([workspaceId, sourceId])
+  @@index([workspaceId])
+}
+
+model EvidenceItem {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceId       String?
+  source         Source?   @relation(fields: [sourceId], references: [id])
+  objective      String?
+  question       String?
+  keyFinding     String
+  evidenceType   String?
+  relevance      String?
+  limitations    String?
+  citationText   String?
+  studentNotes   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([workspaceId])
+}
+
+model Citation {
+  id          String        @id @default(cuid())
+  workspaceId String
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceId    String?
+  style       CitationStyle
+  formatted   String
+  createdAt   DateTime      @default(now())
+
+  @@index([workspaceId])
+}
+
+// ---------- AI ----------
+
+model AIRequest {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  mode        AIMode    @default(BUILD_WITH_ME)
+  task        String
+  contextHash String?
+  createdAt   DateTime  @default(now())
+  responses   AIResponse[]
+
+  @@index([workspaceId, createdAt])
+}
+
+model AIResponse {
+  id          String   @id @default(cuid())
+  requestId   String
+  request     AIRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  status      AIStatus @default(DRAFT)
+  answer      String
+  rationale   String?
+  sources     Json     @default("[]")
+  citations   Json     @default("[]")
+  warnings    Json     @default("[]")
+  nextStep    String?
+  reviewIssues Json    @default("[]")
+  createdAt   DateTime @default(now())
+}
+
+// ---------- Quality ----------
+
+model Review {
+  id          String        @id @default(cuid())
+  workspaceId String
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sectionId   String?
+  section     Section?      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  summary     String?
+  createdAt   DateTime      @default(now())
+  issues      ReviewIssue[]
+
+  @@index([workspaceId, createdAt])
+}
+
+model ReviewIssue {
+  id        String         @id @default(cuid())
+  reviewId  String
+  review    Review         @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  severity  IssueSeverity
+  dimension String
+  message   String
+  evidence  String?
+  createdAt DateTime       @default(now())
+
+  @@index([reviewId, severity])
+}
+
+// ---------- Business ----------
+
+model Plan {
+  id            String         @id @default(cuid())
+  key           String         @unique
+  name          String
+  limits        Json
+  priceKobo     Int            @default(0)
+  createdAt     DateTime       @default(now())
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      Plan               @relation(fields: [planId], references: [id])
+  status    SubscriptionStatus @default(ACTIVE)
+  currentTo DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([userId, status])
+}
+
+model Trial {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startsAt  DateTime  @default(now())
+  endsAt    DateTime
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  @@index([userId, active])
+}
+
+model PaymentTransaction {
+  id               String        @id @default(cuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paystackReference String       @unique
+  amountKobo       Int
+  status           PaymentStatus @default(PENDING)
+  raw              Json          @default("{}")
+  verifiedAt       DateTime?
+  createdAt        DateTime      @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model UsageEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  count     Int      @default(1)
+  meta      Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([userId, type, createdAt])
+}
+
+model FileObject {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  r2Key       String    @unique
+  filename    String
+  mimeType    String
+  sizeBytes   Int
+  createdAt   DateTime  @default(now())
+  requirements WorkspaceRequirement[]
+
+  @@index([userId])
+}
+
+model SupportTicket {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    String
+  subject     String
+  description String
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  assigneeId  String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status, priority])
+}
+
+model UserReport {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind        String
+  subject     String
+  description String
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  meta      Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([userId, action, createdAt])
+}
+
+model FeatureConfiguration {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  title     String
+  body      String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
