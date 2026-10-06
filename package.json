@@ -11,17 +11,22 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
+    "db:seed": "node prisma/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@better-auth/prisma-adapter": "1.7.7",
+    "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "7.10.0",
+    "@types/pg": "^8.23.1",
     "better-auth": "1.7.7",
     "dotenv": "17.2.3",
     "next": "16.4.0",
+    "pg": "^8.23.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "zod": "3.25.76"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.13",

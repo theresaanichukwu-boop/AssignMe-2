@@ -6,6 +6,8 @@ dist/
 .DS_Store
 .env
 .env*.local
+docker-compose.override.yml
 coverage/
 tsconfig.tsbuildinfo
 .next/dev/
+AGENTS.md
