@@ -21,7 +21,7 @@ export async function generateContent(params: {
 }): Promise<GeminiResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new GeminiError("GEMINI_API_KEY is not configured.", 503);
-  const model = params.model ?? process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+  const model = params.model ?? process.env.GEMINI_MODEL ?? "gemini-3.8-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
   let res: Response;
