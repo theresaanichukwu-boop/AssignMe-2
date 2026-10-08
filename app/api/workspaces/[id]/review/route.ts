@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireUser, requireWorkspace, success, error } from "@/lib/auth-session";
 import { reviewContent } from "@/lib/reviewer/reviewer";
 import { checkConsistency } from "@/lib/reviewer/consistency";
+import { checkQuota, recordUsage } from "@/lib/billing/entitlement";
 
 const reviewSchema = z.object({ sectionId: z.string().min(1) });
 
@@ -22,6 +23,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = reviewSchema.safeParse(body);
   if (!parsed.success) {
     return error("VALIDATION", "Invalid review request.", 400, parsed.error.flatten());
+  }
+
+  const quota = await checkQuota(result.user.id, "reviews");
+  if (!quota.allowed) {
+    return error("USAGE_LIMIT", `Review limit reached (${quota.used}/${quota.limit} this period).`, 403);
   }
 
   const section = await prisma.section.findFirst({
@@ -68,6 +74,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     },
     include: { issues: true },
   });
+  await recordUsage(result.user.id, "review.run", 1, { workspaceId: id, sectionId: section.id });
 
   return success({ review }, 201);
 }

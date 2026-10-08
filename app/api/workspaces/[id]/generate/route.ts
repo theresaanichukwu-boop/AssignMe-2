@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUser, requireWorkspace, success, error } from "@/lib/auth-session";
 import { runPipeline } from "@/lib/ai/pipeline";
+import { checkQuota, recordUsage } from "@/lib/billing/entitlement";
 
 const generateSchema = z.object({
   task: z.string().min(1).max(5000),
@@ -27,6 +28,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = generateSchema.safeParse(body);
   if (!parsed.success) {
     return error("VALIDATION", "Invalid generation request.", 400, parsed.error.flatten());
+  }
+
+  const quota = await checkQuota(result.user.id, "aiGenerations");
+  if (!quota.allowed) {
+    return error("USAGE_LIMIT", `AI generation limit reached (${quota.used}/${quota.limit} this period).`, 403);
   }
 
   const [template, pack, profile, evidence] = await Promise.all([
@@ -101,6 +107,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         },
       });
     }
+  }
+
+  if (out.status !== "ERROR" && out.status !== "BLOCKED") {
+    await recordUsage(result.user.id, "ai.generation", 1, { workspaceId: id });
   }
 
   return success({ result: out }, out.status === "ERROR" ? 502 : 200);

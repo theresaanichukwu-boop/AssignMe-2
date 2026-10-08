@@ -50,10 +50,17 @@ export function Sidebar({ active = "Overview" }: { active?: string }) {
     <nav aria-label="Primary" className="w-60 shrink-0 border-r border-navy-100 bg-navy-950 p-4 text-white">
       <p className="px-2 font-serif text-lg">AssignMe</p>
       <ul className="mt-4 space-y-1">
-        {["Dashboard", "My Work", "Create Workspace", "Settings"].map((item) => (
+        {[
+          ["Dashboard", "/dashboard"],
+          ["My Work", "/my-work"],
+          ["Create Workspace", "/workspaces/new"],
+          ["Billing", "/billing"],
+          ["Support", "/support"],
+          ["Settings", "/settings"],
+        ].map(([item, href]) => (
           <li key={item}>
             <a
-              href="#"
+              href={href}
               aria-current={active === item ? "page" : undefined}
               className={`block rounded-md px-3 py-2 text-sm hover:bg-navy-800 focus-visible:outline-2 focus-visible:outline-teal-100 ${active === item ? "bg-navy-800 font-semibold" : ""}`}
             >
