@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUser, success, error } from "@/lib/auth-session";
-import { presignedUploadUrl, presignedDownloadUrl, storageConfigured, MAX_FILE_MB } from "@/lib/storage/r2";
+import { presignedUploadUrl, presignedDownloadUrl, storageConfigured, MAX_FILE_MB } from "@/lib/storage/b2";
 
 const completeSchema = z.object({
   key: z.string().min(1).max(300),

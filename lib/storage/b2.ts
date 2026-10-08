@@ -1,4 +1,5 @@
-// Cloudflare R2 via S3-compatible API (PRD §26).
+// Backblaze B2 via S3-compatible API (replaces Cloudflare R2 per owner
+// decision; PRD §§26/33 superseded — see docs/05-storage-backblaze.md).
 // Private objects, signed URLs, per-user prefixes, validated types/sizes.
 
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
@@ -13,12 +14,15 @@ export const ALLOWED_MIME = new Set([
 ]);
 
 function config() {
-  const accountId = process.env.R2_ACCOUNT_ID;
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-  const bucket = process.env.R2_BUCKET;
-  if (!accountId || !accessKeyId || !secretAccessKey || !bucket) return null;
-  return { accountId, accessKeyId, secretAccessKey, bucket };
+  const keyId = process.env.B2_KEY_ID;
+  const applicationKey = process.env.B2_APPLICATION_KEY;
+  const bucket = process.env.B2_BUCKET;
+  const endpoint = process.env.B2_ENDPOINT;
+  if (!keyId || !applicationKey || !bucket || !endpoint) return null;
+  const regionMatch = /s3\.([^.]+)\.backblazeb2\.com/i.exec(endpoint);
+  const region = regionMatch?.[1] ?? process.env.B2_REGION ?? null;
+  if (!region) return null;
+  return { keyId, applicationKey, bucket, endpoint, region };
 }
 
 export function storageConfigured(): boolean {
@@ -27,11 +31,12 @@ export function storageConfigured(): boolean {
 
 function client(): { s3: S3Client; bucket: string } {
   const c = config();
-  if (!c) throw new Error("R2 is not configured.");
+  if (!c) throw new Error("Backblaze B2 is not configured.");
   const s3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${c.accountId}.r2.cloudflarestorage.com`,
-    credentials: { accessKeyId: c.accessKeyId, secretAccessKey: c.secretAccessKey },
+    region: c.region,
+    endpoint: c.endpoint,
+    credentials: { accessKeyId: c.keyId, secretAccessKey: c.applicationKey },
+    forcePathStyle: false,
   });
   return { s3, bucket: c.bucket };
 }

@@ -21,7 +21,7 @@ Source of truth: PRD Master §§28, 35. Locked stack: PostgreSQL + Prisma 7.
    `Discipline`, `DisciplinePack` (1:1 Discipline, JSON config), `WorkTypeTemplate`
    (key: SEMINAR | RESEARCH_PROJECT | LITERATURE_REVIEW | CASE_STUDY | ESSAY | ASSIGNMENT).
 3. **Workspace core** — `Workspace` (owner User), `WorkspaceRequirement` (uploaded
-   brief/rubric/guidelines → R2 FileObject link), `Section` (ordered),
+   brief/rubric/guidelines → B2 FileObject link), `Section` (ordered),
    `SectionVersion` (immutable snapshots), `Note`.
 4. **Evidence** — `Source` (global dedupe by DOI/URL norm), `WorkspaceSource`
    (workspace ↔ source join + verification status), `EvidenceItem`
@@ -34,7 +34,7 @@ Source of truth: PRD Master §§28, 35. Locked stack: PostgreSQL + Prisma 7.
    (severity CRITICAL | MAJOR | MODERATE | MINOR | SUGGESTION + dimension + evidence).
 7. **Business** — `Plan`, `Subscription`, `Trial`, `PaymentTransaction`
    (Paystack reference unique, server-verified), `UsageEvent` (metered actions),
-   `FileObject` (R2 key, private), `SupportTicket`, `UserReport`, `AuditLog`,
+   `FileObject` (B2 key, private), `SupportTicket`, `UserReport`, `AuditLog`,
    `FeatureConfiguration` (usage limits), `Notification`.
 
 ## Key constraints / indexes

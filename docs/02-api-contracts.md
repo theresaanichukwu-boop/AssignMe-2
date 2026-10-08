@@ -22,7 +22,7 @@ All routes under `app/api/`. Auth: Better Auth session. Every protected handler:
 | `/api/disciplines` | GET | List disciplines + packs (public meta) |
 | `/api/work-types` | GET | List 6 templates (public meta) |
 | `/api/citations` | POST | Format/validate a citation (deterministic layer) |
-| `/api/files` | POST, GET, DELETE | R2 signed upload/download, type+size validated |
+| `/api/files` | POST, GET, DELETE | B2 signed upload/download, type+size validated |
 | `/api/billing` | GET, POST | Plans, initiate Paystack, subscription/trial status |
 | `/api/billing/webhook` | POST | Paystack webhook, signature-verified, idempotent |
 | `/api/support` | GET, POST, PATCH | Tickets + user reports (scoped) |

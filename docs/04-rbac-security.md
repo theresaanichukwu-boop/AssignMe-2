@@ -15,7 +15,7 @@ installed version, do not guess.
 ## Security controls (§30)
 
 - Server-side authZ on all routes; input validated with Zod; rate limits (Redis).
-- Secure cookies, secure headers (Next headers + Netlify), signed R2 URLs with
+- Secure cookies, secure headers (Next headers + Netlify), signed B2 URLs with
   type/size validation, safe object names, per-user prefix.
 - Paystack: server-side verify, webhook HMAC check, idempotent apply.
 - Secrets only server-side, via env (§36). Never log keys/passwords/cards/full docs.

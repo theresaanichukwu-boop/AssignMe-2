@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import crypto from "node:crypto";
-import { objectKey, MAX_FILE_MB } from "../lib/storage/r2";
+import { objectKey, MAX_FILE_MB } from "../lib/storage/b2";
 import { EVENT_FOR_LIMIT } from "../lib/billing/entitlement";
 import { buildDocx } from "../lib/export/docx";
 
