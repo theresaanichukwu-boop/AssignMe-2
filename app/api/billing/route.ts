@@ -9,6 +9,7 @@ import {
   verifyTransaction,
 } from "@/lib/payments/paystack";
 import { sendEmail, templates } from "@/lib/email/resend";
+import { checkRateLimit, rateLimitedResponse } from "@/lib/security/rate-limit";
 
 export async function GET() {
   const result = await requireUser();
@@ -48,6 +49,8 @@ export async function POST(request: Request) {
   }
   const plan = await prisma.plan.findUnique({ where: { key: "PREMIUM" } });
   if (!plan) return error("SETUP", "Premium plan is not configured.", 503);
+  const rl = await checkRateLimit("billing.init", result.user.id);
+  if (!rl.allowed) return rateLimitedResponse();
 
   const reference = newReference();
   await prisma.paymentTransaction.create({

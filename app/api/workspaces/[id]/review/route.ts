@@ -4,6 +4,7 @@ import { requireUser, requireWorkspace, success, error } from "@/lib/auth-sessio
 import { reviewContent } from "@/lib/reviewer/reviewer";
 import { checkConsistency } from "@/lib/reviewer/consistency";
 import { checkQuota, recordUsage } from "@/lib/billing/entitlement";
+import { checkRateLimit, rateLimitedResponse } from "@/lib/security/rate-limit";
 
 const reviewSchema = z.object({ sectionId: z.string().min(1) });
 
@@ -29,6 +30,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!quota.allowed) {
     return error("USAGE_LIMIT", `Review limit reached (${quota.used}/${quota.limit} this period).`, 403);
   }
+  const rl = await checkRateLimit("review.run", result.user.id);
+  if (!rl.allowed) return rateLimitedResponse();
 
   const section = await prisma.section.findFirst({
     where: { id: parsed.data.sectionId, workspaceId: id },

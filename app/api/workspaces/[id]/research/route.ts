@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireUser, requireWorkspace, success, error } from "@/lib/auth-session";
 import { searchAll } from "@/lib/research/providers";
 import { checkQuota, recordUsage } from "@/lib/billing/entitlement";
+import { checkRateLimit, rateLimitedResponse } from "@/lib/security/rate-limit";
 
 const researchSchema = z.object({
   query: z.string().min(2).max(500),
@@ -33,6 +34,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!quota.allowed) {
     return error("USAGE_LIMIT", `Research limit reached (${quota.used}/${quota.limit} this period).`, 403);
   }
+  const rl = await checkRateLimit("research.search", result.user.id);
+  if (!rl.allowed) return rateLimitedResponse();
 
   // Research failures are reported, never replaced with fabrications (PRD §43).
   let found;

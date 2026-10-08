@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireUser, requireWorkspace, success, error } from "@/lib/auth-session";
 import { runPipeline } from "@/lib/ai/pipeline";
 import { checkQuota, recordUsage } from "@/lib/billing/entitlement";
+import { checkRateLimit, rateLimitedResponse } from "@/lib/security/rate-limit";
 
 const generateSchema = z.object({
   task: z.string().min(1).max(5000),
@@ -34,6 +35,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!quota.allowed) {
     return error("USAGE_LIMIT", `AI generation limit reached (${quota.used}/${quota.limit} this period).`, 403);
   }
+  const rl = await checkRateLimit("ai.generate", result.user.id);
+  if (!rl.allowed) return rateLimitedResponse();
 
   const [template, pack, profile, evidence] = await Promise.all([
     prisma.workTypeTemplate.findUnique({ where: { key: owned.workspace.workType } }),

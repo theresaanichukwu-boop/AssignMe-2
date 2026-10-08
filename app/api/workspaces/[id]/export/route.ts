@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUser, requireWorkspace, success, error } from "@/lib/auth-session";
 import { checkQuota, recordUsage } from "@/lib/billing/entitlement";
+import { checkRateLimit, rateLimitedResponse } from "@/lib/security/rate-limit";
 import { reviewContent } from "@/lib/reviewer/reviewer";
 import { checkConsistency } from "@/lib/reviewer/consistency";
 import { buildDocx } from "@/lib/export/docx";
@@ -19,6 +20,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!quota.allowed) {
     return error("USAGE_LIMIT", `Export limit reached (${quota.used}/${quota.limit} this period).`, 403);
   }
+  const rl = await checkRateLimit("export.run", result.user.id);
+  if (!rl.allowed) return rateLimitedResponse();
 
   const [sections, evidenceCount, citations, references] = await Promise.all([
     prisma.section.findMany({ where: { workspaceId: id }, orderBy: { order: "asc" } }),
