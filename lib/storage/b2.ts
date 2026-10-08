@@ -13,12 +13,18 @@ export const ALLOWED_MIME = new Set([
   "text/markdown",
 ]);
 
+function str(name: string): string {
+  // Tolerate values pasted with surrounding quotes/whitespace.
+  return (process.env[name] ?? "").trim().replace(/^"+|"+$/g, "").trim();
+}
+
 function config() {
-  const keyId = process.env.B2_KEY_ID;
-  const applicationKey = process.env.B2_APPLICATION_KEY;
-  const bucket = process.env.B2_BUCKET;
-  const endpoint = process.env.B2_ENDPOINT;
-  if (!keyId || !applicationKey || !bucket || !endpoint) return null;
+  const keyId = str("B2_KEY_ID");
+  const applicationKey = str("B2_APPLICATION_KEY");
+  const bucket = str("B2_BUCKET");
+  const rawEndpoint = str("B2_ENDPOINT");
+  if (!keyId || !applicationKey || !bucket || !rawEndpoint) return null;
+  const endpoint = rawEndpoint.startsWith("http") ? rawEndpoint : `https://${rawEndpoint}`;
   const regionMatch = /s3\.([^.]+)\.backblazeb2\.com/i.exec(endpoint);
   const region = regionMatch?.[1] ?? process.env.B2_REGION ?? null;
   if (!region) return null;
