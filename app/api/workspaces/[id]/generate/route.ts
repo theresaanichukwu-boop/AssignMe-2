@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUser, requireWorkspace, success, error } from "@/lib/auth-session";
 import { runPipeline } from "@/lib/ai/pipeline";
+import { loadWorkspaceContext } from "@/lib/ai/workspace-context";
 import { checkQuota, recordUsage } from "@/lib/billing/entitlement";
 import { checkRateLimit, rateLimitedResponse } from "@/lib/security/rate-limit";
 
@@ -38,14 +39,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const rl = await checkRateLimit("ai.generate", result.user.id);
   if (!rl.allowed) return rateLimitedResponse();
 
-  const [template, pack, profile, evidence] = await Promise.all([
-    prisma.workTypeTemplate.findUnique({ where: { key: owned.workspace.workType } }),
-    prisma.disciplinePack.findFirst({
-      where: { discipline: { name: owned.workspace.discipline ?? "" } },
-    }),
-    prisma.studentProfile.findUnique({ where: { userId: result.user.id } }),
-    prisma.evidenceItem.findMany({ where: { workspaceId: id }, take: 20 }),
-  ]);
+  const { context } = await loadWorkspaceContext(id, result.user.id);
 
   const out = await runPipeline({
     workspaceId: id,
@@ -53,32 +47,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     mode: parsed.data.mode,
     task: parsed.data.task,
     sectionTitle: parsed.data.sectionTitle,
-    context: {
-      workType: owned.workspace.workType,
-      discipline: owned.workspace.discipline,
-      academicLevel: owned.workspace.academicLevel,
-      course: owned.workspace.course,
-      topic: owned.workspace.topic,
-      objectives: (owned.workspace.objectives as string[]) ?? [],
-      researchQuestions: (owned.workspace.researchQuestions as string[]) ?? [],
-      citationStyle: owned.workspace.citationStyle,
-      templateStructure: (template?.structure as unknown) ?? {},
-      disciplinePack: (pack ? {
-        terminology: pack.terminology, conventions: pack.conventions,
-        methodologies: pack.methodologies, frameworks: pack.frameworks,
-      } : null) as Record<string, unknown> | null,
-      profile: {
-        institution: profile?.institution ?? null,
-        level: profile?.academicLevel ?? null,
-        course: profile?.course ?? null,
-      },
-      evidence: evidence.map((e) => ({
-        finding: e.keyFinding,
-        objective: e.objective,
-        citationText: e.citationText,
-        limitations: e.limitations,
-      })),
-    },
+    context,
   });
 
   // Generation never writes to sections directly; explicit save only.

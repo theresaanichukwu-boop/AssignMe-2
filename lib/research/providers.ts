@@ -64,10 +64,24 @@ function parseCrossref(w: CrossrefWork): RawSource | null {
   };
 }
 
-export async function searchCrossref(query: string, limit = 10): Promise<RawSource[]> {
+export interface YearWindow {
+  from: number;
+  to: number;
+}
+
+export function defaultWindow(): YearWindow {
+  const to = new Date().getFullYear();
+  return { from: to - 4, to };
+}
+
+export async function searchCrossref(
+  query: string,
+  limit = 10,
+  window: YearWindow = defaultWindow()
+): Promise<RawSource[]> {
   const url =
     `https://api.crossref.org/works?query.bibliographic=${encodeURIComponent(query)}` +
-    `&filter=from-pub-date:${MIN_YEAR}-01-01,until-pub-date:${MAX_YEAR}-12-31&rows=${limit}&select=title,author,published,published-print,published-online,container-title,DOI,URL,abstract,type`;
+    `&filter=from-pub-date:${window.from}-01-01,until-pub-date:${window.to}-12-31&rows=${limit}&select=title,author,published,published-print,published-online,container-title,DOI,URL,abstract,type`;
   const res = await fetch(url, {
     headers: { "User-Agent": "AssignMe/1.0 (mailto:support@assignme.app)", Accept: "application/json" },
   });
@@ -116,10 +130,14 @@ function parseOpenAlex(w: OpenAlexWork): RawSource | null {
   };
 }
 
-export async function searchOpenAlex(query: string, limit = 10): Promise<RawSource[]> {
+export async function searchOpenAlex(
+  query: string,
+  limit = 10,
+  window: YearWindow = defaultWindow()
+): Promise<RawSource[]> {
   const url =
     `https://api.openalex.org/works?search=${encodeURIComponent(query)}` +
-    `&filter=from_publication_date:${MIN_YEAR}-01-01,to_publication_date:${MAX_YEAR}-12-31&per-page=${limit}`;
+    `&filter=from_publication_date:${window.from}-01-01,to_publication_date:${window.to}-12-31&per-page=${limit}`;
   const res = await fetch(url, {
     headers: { "User-Agent": "AssignMe/1.0 (mailto:support@assignme.app)", Accept: "application/json" },
   });
@@ -129,11 +147,11 @@ export async function searchOpenAlex(query: string, limit = 10): Promise<RawSour
 }
 
 /** Dedupe by DOI (preferred) or normalized title; drop out-of-window years. */
-export function dedupeAndFilter(sources: RawSource[]): RawSource[] {
+export function dedupeAndFilter(sources: RawSource[], window: YearWindow = defaultWindow()): RawSource[] {
   const seen = new Set<string>();
   const out: RawSource[] = [];
   for (const s of sources) {
-    if (s.year !== null && (s.year < MIN_YEAR || s.year > MAX_YEAR)) continue;
+    if (s.year !== null && (s.year < window.from || s.year > window.to)) continue;
     // DOIs are case-insensitive: normalize defensively (providers already do).
     const doi = s.doi?.trim().toLowerCase() || null;
     const key = doi ? `doi:${doi}` : `title:${s.title.toLowerCase().replace(/\s+/g, " ").trim()}`;
@@ -144,11 +162,11 @@ export function dedupeAndFilter(sources: RawSource[]): RawSource[] {
   return out;
 }
 
-export async function searchAll(query: string, limit = 10): Promise<RawSource[]> {
-  const [a, b] = await Promise.allSettled([searchCrossref(query, limit), searchOpenAlex(query, limit)]);
+export async function searchAll(query: string, limit = 10, window: YearWindow = defaultWindow()): Promise<RawSource[]> {
+  const [a, b] = await Promise.allSettled([searchCrossref(query, limit, window), searchOpenAlex(query, limit, window)]);
   const merged = [
     ...(a.status === "fulfilled" ? a.value : []),
     ...(b.status === "fulfilled" ? b.value : []),
   ];
-  return dedupeAndFilter(merged);
+  return dedupeAndFilter(merged, window);
 }

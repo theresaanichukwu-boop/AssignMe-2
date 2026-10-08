@@ -20,6 +20,7 @@ export function ResearchPanel({ workspaceId }: { workspaceId: string }) {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Found[]>([]);
   const [saved, setSaved] = useState<number | null>(null);
+  const [window, setWindow] = useState<{ from: number; to: number } | null>(null);
   const [status, setStatus] = useState("");
 
   async function search(e: React.FormEvent) {
@@ -39,6 +40,7 @@ export function ResearchPanel({ workspaceId }: { workspaceId: string }) {
     }
     setResults(json.data.results);
     setSaved(json.data.saved);
+    setWindow(json.data.window ?? null);
   }
 
   return (
@@ -52,8 +54,11 @@ export function ResearchPanel({ workspaceId }: { workspaceId: string }) {
         </Button>
       </form>
       <p className="text-xs text-slate-500">
-        Strict {new Date().getFullYear() - 4}–{new Date().getFullYear()} window (rolling five years).
-        Older foundational works are excluded unless explicitly requested.
+        {window ? (
+          <>Sources limited to {window.from}–{window.to} (set in Main Build; blank = rolling five years).</>
+        ) : (
+          <>Strict rolling five-year window. Older foundational works are excluded unless explicitly requested.</>
+        )}
       </p>
       {saved !== null && (
         <p role="status" className="text-sm text-teal-800">
@@ -79,7 +84,8 @@ export function ResearchPanel({ workspaceId }: { workspaceId: string }) {
               }}
             />
             <p className="mt-1 text-xs text-slate-500">
-              via {r.provider} <Badge>2021–2026</Badge>
+              via {r.provider}{" "}
+              {window && <Badge>{window.from}–{window.to}</Badge>}
             </p>
           </li>
         ))}

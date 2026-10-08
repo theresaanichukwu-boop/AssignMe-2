@@ -16,6 +16,7 @@ const suites = {
   "04": "04-ai-live.mjs",
   "05": "05-storage.mjs",
   "06": "06-billing.mjs",
+  "07": "07-workflow.mjs",
 };
 
 const selected =

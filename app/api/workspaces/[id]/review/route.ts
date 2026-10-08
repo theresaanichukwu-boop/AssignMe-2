@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUser, requireWorkspace, success, error } from "@/lib/auth-session";
-import { reviewContent } from "@/lib/reviewer/reviewer";
+import { reviewContent, reviewStructure } from "@/lib/reviewer/reviewer";
+import type { WorkTypeKey } from "@/lib/academic/work-types";
 import { checkConsistency } from "@/lib/reviewer/consistency";
 import { checkQuota, recordUsage } from "@/lib/billing/entitlement";
 import { checkRateLimit, rateLimitedResponse } from "@/lib/security/rate-limit";
@@ -63,15 +64,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     referenceCount: references,
   });
 
+  const structure = reviewStructure(
+    owned.workspace.workType as WorkTypeKey,
+    sections.map((s) => ({ key: s.key, title: s.title }))
+  );
+
   const review = await prisma.review.create({
     data: {
       workspaceId: id,
       sectionId: section.id,
-      summary: `${issues.length} issue(s), ${consistency.length} consistency note(s).`,
+      summary: `${issues.length} issue(s), ${consistency.length} consistency note(s), ${structure.length} structure note(s).`,
       issues: {
         create: [
           ...issues.map((i) => ({ severity: i.severity, dimension: i.dimension, message: i.message })),
           ...consistency.map((c) => ({ severity: "MODERATE" as const, dimension: "Consistency", message: c.message })),
+          ...structure.map((s) => ({ severity: s.severity, dimension: s.dimension, message: s.message })),
         ],
       },
     },

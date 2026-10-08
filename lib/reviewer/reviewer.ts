@@ -1,6 +1,8 @@
 // Professor-style reviewer (PRD §15): deterministic checks across review
 // dimensions, classified by severity, in evidence-based language.
 
+import { WORK_TYPES, type WorkTypeKey } from "@/lib/academic/work-types";
+
 export type Severity = "CRITICAL" | "MAJOR" | "MODERATE" | "MINOR" | "SUGGESTION";
 
 export interface ReviewIssue {
@@ -106,6 +108,31 @@ export function reviewContent(input: ReviewInput): ReviewIssue[] {
 
   if (issues.length === 0) {
     issues.push({ severity: "SUGGESTION", dimension: "Argument", message: "No structural problems detected. Strengthen the argument with counter-evidence where appropriate." });
+  }
+  return issues;
+}
+
+/**
+ * Work-type structure check (spec §10): required section families for the
+ * work type must exist — never the same bar for every work type.
+ */
+export function reviewStructure(workType: WorkTypeKey, sections: Array<{ key: string; title: string }>): ReviewIssue[] {
+  const issues: ReviewIssue[] = [];
+  if (sections.length === 0) {
+    return [{ severity: "MAJOR", dimension: "Structure", message: "No sections exist yet. Build the work-type structure first." }];
+  }
+  const haystack = sections.map((s) => `${s.key} ${s.title}`.toLowerCase()).join(" | ");
+  const missing: string[] = [];
+  for (const family of WORK_TYPES[workType].expectedSections) {
+    const present = family.some((kw) => haystack.includes(kw));
+    if (!present) missing.push(family[0]);
+  }
+  if (missing.length > 0) {
+    issues.push({
+      severity: workType === "RESEARCH_PROJECT" ? "MAJOR" : "MODERATE",
+      dimension: "Structure",
+      message: `Expected ${workType.replace(/_/g, " ").toLowerCase()} coverage is missing: ${missing.join(", ")}. Add or rename sections to cover it.`,
+    });
   }
   return issues;
 }

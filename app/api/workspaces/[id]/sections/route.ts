@@ -51,3 +51,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   });
   return success({ section }, existing ? 200 : 201);
 }
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const result = await requireUser();
+  if ("response" in result) return result.response;
+  const { id } = await params;
+  const owned = await requireWorkspace(result.user.id, id);
+  if ("response" in owned) return owned.response;
+  const { searchParams } = new URL(request.url);
+  const sectionId = searchParams.get("sectionId");
+  if (!sectionId) return error("VALIDATION", "sectionId is required.", 400);
+  const section = await prisma.section.findFirst({ where: { id: sectionId, workspaceId: id } });
+  if (!section) return error("NOT_FOUND", "Section not found.", 404);
+  await prisma.section.delete({ where: { id: sectionId } });
+  return success({ deleted: true });
+}

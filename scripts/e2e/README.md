@@ -11,6 +11,7 @@ with real Postgres/Redis and (where configured) real providers:
 | `04-ai-live` | Gemini draft → persist → save-to-section (consumes AI quota) |
 | `05-storage` | B2 presigned upload → PUT → download → byte-identical (leaves a probe file) |
 | `06-billing` | Paystack initialize → checkout URL → unpaid verify fails closed (pending tx, no charge) |
+| `07-workflow` | helper advisory-only → Main Build → brief → draft → add-to-editor → structure review → section delete → year-window research |
 
 Run:
 

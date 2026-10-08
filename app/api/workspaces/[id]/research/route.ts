@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUser, requireWorkspace, success, error } from "@/lib/auth-session";
-import { searchAll } from "@/lib/research/providers";
+import { searchAll, defaultWindow } from "@/lib/research/providers";
 import { checkQuota, recordUsage } from "@/lib/billing/entitlement";
 import { checkRateLimit, rateLimitedResponse } from "@/lib/security/rate-limit";
 
@@ -38,9 +38,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!rl.allowed) return rateLimitedResponse();
 
   // Research failures are reported, never replaced with fabrications (PRD §43).
+  // Year window comes from the student's Main Build choice (default: rolling 5 years).
+  const defaults = defaultWindow();
+  const window = {
+    from: owned.workspace.sourceYearFrom ?? defaults.from,
+    to: owned.workspace.sourceYearTo ?? defaults.to,
+  };
   let found;
   try {
-    found = await searchAll(parsed.data.query, parsed.data.limit);
+    found = await searchAll(parsed.data.query, parsed.data.limit, window);
   } catch {
     return error("UPSTREAM_ERROR", "Research providers unreachable. Try again later.", 502);
   }
@@ -72,7 +78,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   await recordUsage(result.user.id, "research.search", 1, { workspaceId: id, query: parsed.data.query });
 
-  return success({ results: found, saved }, 201);
+  return success({ results: found, saved, window }, 201);
 }
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {

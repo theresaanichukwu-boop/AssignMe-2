@@ -5,8 +5,8 @@ import { prisma } from "@/lib/db";
 const tabs = [
   ["overview", "Overview"],
   ["build", "Build"],
-  ["research", "Research"],
   ["editor", "Editor"],
+  ["research", "Research"],
   ["reviewer", "Reviewer"],
   ["sources", "Sources"],
   ["versions", "Versions"],
