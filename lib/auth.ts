@@ -10,6 +10,11 @@ import { sendEmail, templates } from "./email/resend";
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: { enabled: true },
+  // Production (Docker/Netlify) must set APP_URL to the public origin.
+  // Without it, better-auth cannot validate request origins and rejects
+  // auth mutations with INVALID_ORIGIN. Local dev works without it.
+  baseURL: process.env.APP_URL || undefined,
+  trustedOrigins: process.env.APP_URL ? [process.env.APP_URL] : [],
   databaseHooks: {
     user: {
       create: {

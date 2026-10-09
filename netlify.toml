@@ -1,6 +1,18 @@
+# Netlify production deployment (PRD §40).
+# Next.js is detected automatically — no plugin package required.
 [build]
   command = "prisma generate && next typegen && next build"
   publish = ".next"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+[build.environment]
+  NODE_VERSION = "22"
+
+# Required environment variables (Site settings → Environment variables):
+# DATABASE_URL (external PostgreSQL), REDIS_URL, BETTER_AUTH_SECRET,
+# GEMINI_API_KEY, GEMINI_MODEL, B2_KEY_ID, B2_APPLICATION_KEY, B2_BUCKET,
+# B2_ENDPOINT, PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY, RESEND_API_KEY,
+# APP_URL (production URL, used for Paystack callback + auth links)
+
+# Apply production migrations after deploy (external PostgreSQL):
+#   prisma migrate deploy
+# Then verify through the live application, not only the build log.
