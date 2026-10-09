@@ -6,6 +6,9 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # The B2 bucket name matches the app name, which appears throughout the
+  # source and build output; it is not a credential, so skip scanning it.
+  SECRETS_SCAN_OMIT_KEYS = "B2_BUCKET"
 
 # Required environment variables (Site settings → Environment variables):
 # DATABASE_URL (external PostgreSQL), REDIS_URL, BETTER_AUTH_SECRET,
