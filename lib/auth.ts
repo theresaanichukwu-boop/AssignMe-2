@@ -10,10 +10,14 @@ import { sendEmail, templates } from "./email/resend";
 function trustedOrigins(): string[] {
   // Platforms provide their own URL; accept all of them so a mistyped or
   // missing APP_URL can never lock users out with INVALID_ORIGIN.
-  // Vercel sets VERCEL_URL, Netlify sets URL + DEPLOY_PRIME_URL.
+  // Vercel sets VERCEL_URL (this deployment) and VERCEL_PROJECT_PRODUCTION_URL
+  // (the stable address users visit); Netlify sets URL + DEPLOY_PRIME_URL.
   const raw = [
     process.env.APP_URL ?? "",
     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "",
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "",
     process.env.URL ?? "",
     process.env.DEPLOY_PRIME_URL ?? "",
   ];
