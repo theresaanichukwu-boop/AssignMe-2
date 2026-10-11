@@ -28,6 +28,13 @@ PostgreSQL + Redis; all three services have healthchecks.
 5. Verify through the live application (checklist below), not only the build log.
    HTTPS is automatic on Netlify.
 
+## No direct database access? (SQL-editor fallback)
+
+If port 5432 is blocked on your network, skip `migrate`/`seed` and run
+`scripts/supabase-setup.sql` in Supabase Dashboard → SQL Editor instead.
+It contains both migrations plus idempotent seed data (safe to re-run).
+Regenerate it after schema/seed changes with `node scripts/build-seed-sql.ts`.
+
 ## Production verification checklist
 
 - `GET /api/health` → 200 (also the Docker/Netlify health signal).
