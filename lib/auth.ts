@@ -7,14 +7,29 @@ import { sendEmail, templates } from "./email/resend";
 
 // Verified against better-auth@1.7.7: betterAuth + prismaAdapter(prisma,
 // { provider }) + emailAndPassword + nextCookies + toNextJsHandler.
+function trustedOrigins(): string[] {
+  // Platforms provide their own URL; accept all of them so a mistyped or
+  // missing APP_URL can never lock users out with INVALID_ORIGIN.
+  // Vercel sets VERCEL_URL, Netlify sets URL + DEPLOY_PRIME_URL.
+  const raw = [
+    process.env.APP_URL ?? "",
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "",
+    process.env.URL ?? "",
+    process.env.DEPLOY_PRIME_URL ?? "",
+  ];
+  const clean = raw.map((s) => s.trim().replace(/\/+$/, "")).filter(Boolean);
+  return [...new Set(clean)];
+}
+
+const appUrl = (process.env.APP_URL ?? "").trim().replace(/\/+$/, "") || undefined;
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: { enabled: true },
-  // Production (Docker/Netlify) must set APP_URL to the public origin.
-  // Without it, better-auth cannot validate request origins and rejects
-  // auth mutations with INVALID_ORIGIN. Local dev works without it.
-  baseURL: process.env.APP_URL || undefined,
-  trustedOrigins: process.env.APP_URL ? [process.env.APP_URL] : [],
+  // Production must be reachable at one of these origins. Platform-provided
+  // URLs are included so auth never breaks from a mistyped APP_URL.
+  baseURL: appUrl,
+  trustedOrigins: trustedOrigins(),
   databaseHooks: {
     user: {
       create: {
